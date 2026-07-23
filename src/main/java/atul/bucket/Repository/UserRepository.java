@@ -1,4 +1,4 @@
-package atul.bucket.Repository;
+package atul.bucket.repository;
 
 import java.util.Optional;
 
