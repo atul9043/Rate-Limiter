@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate Limiter — Demo</title>
+<style>
+  :root {
+    --bg: #272944;
+    --panel: #141715;
+    --line: #323332;
+    --text: #e4e7e3;
+    --muted: #7c8b81;
+    --accent: #5fd694;
+    --accent-dim: #2c5940;
+    --warn: #e0985a;
+    --danger: #d9705f;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-attachment: fixed;
+    background-position: -1px -1px;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 24px;
+  }
+
+  .kicker {
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif, Helvetica, sans-serif ;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+
+  .sub {
+    margin-top: 7%;
+    color: #c7c2d2 ;
+    font-size: 13px;
+    max-width: max-content;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 12px;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .dot.on { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    margin-bottom: 20px;
+  }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .panel-head .idx {
+    color: var(--accent);
+    font-size: 11px;
+    margin-right: 8px;
+  }
+
+  .panel-head h2 {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0;
+    display: inline;
+  }
+
+  .panel-head .tag {
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .panel-body { padding: 18px; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  input {
+    width: 100%;
+    background: #0a0c0b;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 2px;
+    margin-bottom: 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+
+  button {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #06110a;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity .15s, transform .1s;
+  }
+
+  button:hover { opacity: 0.88; }
+  button:active { transform: scale(0.98); }
+
+  button.ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--line);
+  }
+
+  button.ghost:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+
+  button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .msg {
+    margin-top: 12px;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    display: none;
+  }
+
+  .msg.show { display: block; }
+  .msg.ok { background: rgba(95,214,148,0.08); border-color: var(--accent-dim); color: var(--accent); }
+  .msg.err { background: rgba(217,112,95,0.08); border-color: #4a2b26; color: var(--danger); }
+
+  .token-box {
+    background: #0a0c0b;
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    border-radius: 2px;
+    font-size: 11px;
+    color: var(--muted);
+    word-break: break-all;
+    margin-top: 10px;
+    display: none;
+  }
+
+  .token-box.show { display: block; }
+
+  .meter {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .meter-track {
+    flex: 1;
+    height: 6px;
+    background: #0a0c0b;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .meter-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 100%;
+    transition: width .25s ease, background .25s ease;
+  }
+
+  .meter-fill.low { background: var(--warn); }
+  .meter-fill.empty { background: var(--danger); }
+
+  .meter-num {
+    font-size: 20px;
+    font-weight: 600;
+    min-width: 34px;
+    text-align: right;
+  }
+
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .tier-badge b { color: var(--text); }
+  .tier-badge.auth b { color: var(--accent); }
+
+  .log {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    border-top: 1px dashed var(--line);
+    padding-top: 12px;
+    max-height: 130px;
+    overflow-y: auto;
+  }
+
+  .log div { padding: 2px 0; }
+  .log .hit { color: var(--accent); }
+  .log .block { color: var(--danger); }
+
+  footer {
+    margin-top: 40px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="kicker">token bucket · redis · spring boot</div>
+    <h1>Rate Limiter Demo</h1>
+    <div class="sub">Register or log in to unlock a higher request tier, then hammer the test endpoint below to watch the bucket drain and refill.</div>
+    <div class="status-row">
+      <span class="dot" id="apiDot"></span>
+      <span id="apiStatus">checking api…</span>
+    </div>
+  </header>
+
+  <!-- REGISTER -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><span class="idx">01</span><h2>Register</h2></div>
+      <span class="tag">POST /api/register</span>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div>
+          <label>Username</label>
+          <input type="text" id="regUser" placeholder="atul" autocomplete="off">
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="••••••••">
+        </div>
+      </div>
+      <button onclick="register()">Create account</button>
+      <div class="msg" id="regMsg"></div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><span class="idx">02</span><h2>Log in</h2></div>
+      <span class="tag">POST /api/login</span>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div>
+          <label>Username</label>
+          <input type="text" id="loginUser" placeholder="atul" autocomplete="off">
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="••••••••">
+        </div>
+      </div>
+      <button onclick="login()">Log in</button>
+      <button class="ghost" onclick="logout()" style="margin-left:8px;">Log out</button>
+      <div class="msg" id="loginMsg"></div>
+      <div class="token-box" id="tokenBox"></div>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><span class="idx">03</span><h2>Test the limiter</h2></div>
+      <span class="tag">GET /api/test</span>
+    </div>
+    <div class="panel-body">
+      <div class="tier-badge" id="tierBadge">
+        <span class="dot" id="tierDot"></span>
+        tier: <b id="tierLabel">anonymous</b>
+      </div>
+
+      <label>Tokens remaining</label>
+      <div class="meter">
+        <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
+        <div class="meter-num" id="meterNum">—</div>
+      </div>
+
+      <button onclick="hitTest()" style="margin-top:16px;">Send request</button>
+      <button class="ghost" onclick="burst()" style="margin-left:8px;">Burst × 10</button>
+
+      <div class="msg" id="testMsg"></div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <footer style="color:#c7c2d2">Github · <a href="https://github.com/atul9043/RateLimiter" target="_blank">atul9043</a></footer>
+
+</div>
+
+<script>
+const API = "http://localhost:8080/api";
+let token = localStorage.getItem("rl_token") || null;
+
+function showMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "msg show " + (ok ? "ok" : "err");
+}
+
+function updateTierUI() {
+  const badge = document.getElementById("tierBadge");
+  const dot = document.getElementById("tierDot");
+  const label = document.getElementById("tierLabel");
+  if (token) {
+    badge.classList.add("auth");
+    dot.classList.add("on");
+    label.textContent = "authenticated (higher limit)";
+  } else {
+    badge.classList.remove("auth");
+    dot.classList.remove("on");
+    label.textContent = "anonymous (lower limit)";
+  }
+}
+
+function logLine(text, ok) {
+  const log = document.getElementById("log");
+  const line = document.createElement("div");
+  line.className = ok ? "hit" : "block";
+  const time = new Date().toLocaleTimeString();
+  line.textContent = `[${time}] ${text}`;
+  log.prepend(line);
+}
+
+function updateMeter(remaining) {
+  const num = document.getElementById("meterNum");
+  const fill = document.getElementById("meterFill");
+  if (remaining === null) {
+    num.textContent = "—";
+    return;
+  }
+  num.textContent = remaining;
+  const max = token ? 20 : 5; // mirror backend AUTH_MAX_TOKENS / ANON_MAX_TOKENS
+  const pct = Math.max(0, Math.min(100, (remaining / max) * 100));
+  fill.style.width = pct + "%";
+  fill.className = "meter-fill" + (remaining === 0 ? " empty" : remaining <= max * 0.3 ? " low" : "");
+}
+
+async function checkApi() {
+  try {
+    const res = await fetch(API + "/test");
+    document.getElementById("apiDot").classList.add("on");
+    document.getElementById("apiStatus").textContent = "api reachable at " + API;
+  } catch (e) {
+    document.getElementById("apiStatus").textContent = "api unreachable — is the backend running on :8080?";
+  }
+}
+
+async function register() {
+  const username = document.getElementById("regUser").value.trim();
+  const password = document.getElementById("regPass").value;
+  if (!username || !password) return showMsg("regMsg", "Enter a username and password.", false);
+
+  try {
+    const res = await fetch(API + "/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const text = await res.text();
+    showMsg("regMsg", res.ok ? "Account created — you can log in now." : text, res.ok);
+  } catch (e) {
+    showMsg("regMsg", "Request failed — check the backend is running.", false);
+  }
+}
+
+async function login() {
+  const username = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value;
+  if (!username || !password) return showMsg("loginMsg", "Enter a username and password.", false);
+
+  try {
+    const res = await fetch(API + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const text = await res.text();
+    if (res.ok) {
+      token = text;
+      localStorage.setItem("rl_token", token);
+      showMsg("loginMsg", "Logged in — you're now on the higher tier.", true);
+      const box = document.getElementById("tokenBox");
+      box.textContent = token;
+      box.classList.add("show");
+      updateTierUI();
+    } else {
+      showMsg("loginMsg", "Login failed — check your credentials.", false);
+    }
+  } catch (e) {
+    showMsg("loginMsg", "Request failed — check the backend is running.", false);
+  }
+}
+
+function logout() {
+  token = null;
+  localStorage.removeItem("rl_token");
+  document.getElementById("tokenBox").classList.remove("show");
+  showMsg("loginMsg", "Logged out — back to the anonymous tier.", true);
+  updateTierUI();
+}
+
+async function hitTest() {
+  try {
+    const headers = token ? { "Authorization": "Bearer " + token } : {};
+    const res = await fetch(API + "/test", { headers });
+    const remaining = res.headers.get("X-RateLimit-Remaining");
+    updateMeter(remaining !== null ? Number(remaining) : null);
+
+    if (res.status === 429) {
+      showMsg("testMsg", "429 — rate limit hit. Wait for the bucket to refill.", false);
+      logLine("429 blocked", false);
+    } else {
+      showMsg("testMsg", "200 OK", true);
+      logLine(`200 OK · ${remaining ?? "?"} left`, true);
+    }
+  } catch (e) {
+    showMsg("testMsg", "Request failed — check the backend is running.", false);
+  }
+}
+
+async function burst() {
+  for (let i = 0; i < 10; i++) {
+    await hitTest();
+    await new Promise(r => setTimeout(r, 120));
+  }
+}
+
+updateTierUI();
+checkApi();
+</script>
+
+</body>
+</html>

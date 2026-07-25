@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -36,10 +35,20 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
         http.csrf(customizer -> customizer.disable())
-            .authorizeHttpRequests(requests -> requests.requestMatchers("/api/register", "/api/login", "/api/test").permitAll()
+            .authorizeHttpRequests(requests -> requests.requestMatchers("/api/register", "/api/login").permitAll()
             .anyRequest().authenticated())
             .addFilterBefore(rlFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .cors(cors -> cors.configurationSource(request -> {
+                var config = new org.springframework.web.cors.CorsConfiguration();
+                config.setAllowedOrigins(java.util.List.of("*"));
+                config.setAllowedMethods(java.util.List.of("GET", "POST"));
+                config.setAllowedHeaders(java.util.List.of("*"));
+                config.setExposedHeaders(java.util.List.of("X-RateLimit-Remaining"));
+            return config;
+            }
+           )
+        );
 
         return http.build();
     }
