@@ -17,11 +17,16 @@ public class RateLimiterService {
 
     @Autowired
     StringRedisTemplate redisTemplate;
-    private int MAX_TOKEN = 3;
-    private int REFILL_RATE = 5;
-    private int REFILL_INTERVAL = 30;
 
-    private  DefaultRedisScript<List> script;
+    private int AUTH_MAX_TOKEN = 20;
+    private int AUTH_REFILL_RATE = 10;
+
+    private int ANON_MAX_TOKEN = 5;
+    private int ANON_REFILL_RATE = 3;
+    private int BUCKET_REFILL_INTERVAL = 30;
+    
+
+    private DefaultRedisScript<List> script;
 
     public RateLimiterService(){
 
@@ -30,7 +35,11 @@ public class RateLimiterService {
         script.setResultType(List.class);
     }
 
-    public RateLimitResult isAllowed(String clientId){
+    public RateLimitResult isAllowed(String clientId, boolean authenticated){
+
+        int MAX_TOKEN = authenticated?AUTH_MAX_TOKEN:ANON_MAX_TOKEN;
+        int REFILL_RATE = authenticated?AUTH_REFILL_RATE:ANON_REFILL_RATE;
+        int REFILL_INTERVAL = BUCKET_REFILL_INTERVAL;
 
         String key = "RateLimit :" + clientId;
         long now = Instant.now().getEpochSecond();

@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 
+
 @Entity
 @Data
 public class User {
@@ -16,9 +17,4 @@ public class User {
     
     private String username;
     private String password;
-
-    public User(String username, String password){
-        this.username = username;
-        this.password = password;
-    }
 }
