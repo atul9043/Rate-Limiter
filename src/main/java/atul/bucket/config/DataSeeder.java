@@ -21,10 +21,10 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.findByUsername("demo").isEmpty()) {
+        if (userRepository.findByUsername("atul").isEmpty()) {
             User demoUser = new User();
-            demoUser.setUsername("demo");
-            demoUser.setPassword(passwordEncoder.encode("demo1234"));
+            demoUser.setUsername("atul");
+            demoUser.setPassword(passwordEncoder.encode("root"));
             userRepository.save(demoUser);
         }
     }
