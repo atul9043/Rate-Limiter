@@ -1,0 +1,15 @@
+# Ignore Maven build output
+target/
+
+# Ignore local H2 database files (if stored in home/root directory)
+*.mv.db
+*.trace.db
+
+# IDEs and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.git
+
+.env
