@@ -27,7 +27,7 @@ public class UserService implements UserDetailsService{
     @Override
     public UserDetails loadUserByUsername(String username) {
         // TODO Auto-generated method stub
-        atul.bucket.model.User user = repo.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("User not found"+username));
+        atul.bucket.model.Users user = repo.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("User not found"+username));
 
         return User.builder()
                    .username(user.getUsername())
@@ -36,13 +36,13 @@ public class UserService implements UserDetailsService{
                    .build();
     }
 
-public ResponseEntity<String> register(atul.bucket.model.User request) {
+public ResponseEntity<String> register(atul.bucket.model.Users request) {
 
         if(repo.findByUsername(request.getUsername()).isPresent()){
             return new ResponseEntity<>("Username already exists", HttpStatus.NOT_ACCEPTABLE);
         }
 
-        atul.bucket.model.User user = new atul.bucket.model.User();
+        atul.bucket.model.Users user = new atul.bucket.model.Users();
 
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));

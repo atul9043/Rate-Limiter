@@ -16,7 +16,7 @@ public class LoginService {
     @Autowired
     JwtService service;
 
-    public ResponseEntity<String> login(atul.bucket.model.User request) {
+    public ResponseEntity<String> login(atul.bucket.model.Users request) {
        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         String token = service.generateToken(request.getUsername());

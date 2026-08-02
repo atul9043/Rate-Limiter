@@ -7,7 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import atul.bucket.repository.UserRepository;
-import atul.bucket.model.User;
+import atul.bucket.model.Users;
 
 @Component
 @Profile("demo")
@@ -22,7 +22,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (userRepository.findByUsername("atul").isEmpty()) {
-            User demoUser = new User();
+            Users demoUser = new Users();
             demoUser.setUsername("atul");
             demoUser.setPassword(passwordEncoder.encode("root"));
             userRepository.save(demoUser);

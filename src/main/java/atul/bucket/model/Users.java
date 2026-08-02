@@ -1,5 +1,7 @@
 package atul.bucket.model;
 
+import org.hibernate.annotations.Table;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,7 +11,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class User {
+public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
