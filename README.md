@@ -39,15 +39,6 @@ Redis stores each client's bucket as a Hash (`ratelimit:{ip|user}` → `tokens`,
 - **JWT over session-based auth**, specifically because it's stateless — the rate limiter needs a cheap way to identify the caller without a DB/session lookup, which a bare JWT decode provides and a session ID does not.
 - **Secrets in environment variables**, not committed to the repo. JWT signing key and DB credentials are read from `.env` via placeholders in `application.properties`.
 
-## Interesting bugs I hit and fixed
-
-- **Argument-order mismatch in the Lua script call** — passed `REFILL_RATE` and `REFILL_INTERVAL` swapped, silently changing the bucket's actual behavior (refilled almost instantly) without throwing any error. Found by manually inspecting the bucket's Redis state.
-- **Backwards elapsed-time calculation** in the Lua script (`last_refill - now` instead of `now - last_refill`), producing a negative number and preventing refill entirely.
-- **Field name mismatch** between the Lua script's `HMGET` (reading `'token'`) and `HMSET` (writing `'tokens'`) — every read came back empty, so the bucket silently reset to full on every request.
-- **Invalid HTTP header names** — `"Rate-Limit Remaining"` (space) and later `"X-RateLimit=Remaining"` (equals sign instead of hyphen) both violate HTTP header syntax, causing Postman to fail parsing the response entirely.
-- **Circular Spring bean dependency**: `SecurityConfig` needed `UserDetailsService` to build `DaoAuthenticationProvider`, while `UserService` needed `AuthenticationManager` and `PasswordEncoder`, both defined inside `SecurityConfig` — a dependency loop. Fixed by extracting `PasswordEncoder` into its own config class and moving login logic into a separate `AuthService` that only `AuthController` depends on.
-- **`.env` values resolving as literal, unresolved strings** (`${DB_USERNAME}` passed straight to MySQL as the username) — traced to spaces around `=` in the `.env` file, which breaks how dotenv parsers tokenize each line.
-
 ## Known limitations
 
 - Rate limit tiers (`MAX_TOKENS`, refill rate/interval) are hardcoded constants rather than externalized config — a quick fix, just not done yet.
