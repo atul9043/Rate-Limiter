@@ -432,7 +432,7 @@ async function checkApi() {
     document.getElementById("apiDot").classList.add("on");
     document.getElementById("apiStatus").textContent = "api reachable at " + API;
   } catch (e) {
-    document.getElementById("apiStatus").textContent = "api unreachable — is the backend running on :8080?";
+    document.getElementById("apiStatus").textContent = "api unreachable — is the backend running?";
   }
 }
 
