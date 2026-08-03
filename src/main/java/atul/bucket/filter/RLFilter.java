@@ -39,11 +39,11 @@ public class RLFilter extends OncePerRequestFilter{
                         clientId = "User: "+user;
                         authenticated = true;
                     } catch (Exception e){
-                        clientId = "Ip: "+request.getRemoteAddr();
+                        clientId = "Ip: "+getClientIp(request);
                         authenticated = false;
                     }
                 } else {
-                    clientId = "User: "+request.getRemoteAddr();
+                    clientId = "User: "+getClientIp(request);
                     authenticated = false;
                 }
                 RateLimitResult result = service.isAllowed(clientId, authenticated);
@@ -59,6 +59,18 @@ public class RLFilter extends OncePerRequestFilter{
                 System.out.println("Allowed: " + result.isAllowed() + ", Tokens left: " + result.tokensLeft());
                 filterChain.doFilter(request, response);
         
+    }
+
+     private String getClientIp(HttpServletRequest request) {
+        String remoteAddr = request.getRemoteAddr();
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        String resolvedIp = (forwardedFor != null && !forwardedFor.isBlank())
+                ? forwardedFor.split(",")[0].trim()
+                : remoteAddr;
+
+        System.out.println("RemoteAddr: " + remoteAddr + ", X-Forwarded-For: " + forwardedFor + ", Using: " + resolvedIp);
+
+        return resolvedIp;
     }
 
 }
