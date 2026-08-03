@@ -2,7 +2,7 @@
 
 A rate limiter built from scratch with Spring Boot, Redis, and JWT — enforcing per-client request limits with tiered access (higher limits for authenticated users) using an atomic token bucket implemented in Lua.
 
-Live at: [https://atul9043.github.io/Rate/](https://atul9043.github.io/Rate-Limiter/) (Backend might be paused to conserve hosting credits — email me (atulkr9043@gmail.com) or message me and I'll spin it back up within a few minutes)
+Live at: [https://atul9043.github.io/Rate-Limiter/](https://atul9043.github.io/Rate-Limiter/) (Backend might be paused to conserve hosting credits — email me (atulkr9043@gmail.com) or message me and I'll spin it back up within a few minutes)
 
 ## What this demonstrates
 
