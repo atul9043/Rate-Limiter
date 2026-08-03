@@ -431,7 +431,7 @@ async function checkApi() {
   try {
     const res = await fetch(API + "/test");
     document.getElementById("apiDot").classList.add("on");
-    document.getElementById("apiStatus").textContent = "api reachable at " + API;
+    document.getElementById("apiStatus").textContent = "api reachable — ready to test";
   } catch (e) {
     document.getElementById("apiStatus").textContent = "api unreachable — is the backend running?";
   }
